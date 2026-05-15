@@ -7,7 +7,7 @@ from discord.ext import commands
 from flask import Flask
 from threading import Thread
 
-# --- SUNUCU AKTİF TUTMA (UptimeRobot İçin) ---
+# --- SUNUCU AKTİF TUTMA ---
 app = Flask('')
 @app.route('/')
 def home(): return "KAJUNV36 ZIRVE SISTEM AKTIF"
@@ -43,102 +43,108 @@ def update_balance(user_id, amount):
     data["bakiyeler"][u_id] = data["bakiyeler"].get(u_id, 1000) + amount
     save_data(data)
 
-# --- ANA OLAYLAR (Selamlaşma & Filtre) ---
+# --- ANA OLAYLAR ---
 @bot.event
 async def on_message(message):
     if message.author == bot.user: return
-    
     msg = message.content.lower()
-
-    # 👋 SELAMLAŞMA KOMUTLARI
-    if msg == "selam" or msg == "slm" or msg == "sa":
-        await message.channel.send(f"Aleyküm Selam {message.author.mention} hoş geldin reis! Mekanın sahibi KAJUNV36 burada.")
+    if msg in ["selam", "slm", "sa"]:
+        await message.channel.send(f"Aleyküm Selam {message.author.mention} hoş geldin reis!")
         return
-
     if msg == "naber":
-        await message.channel.send("İyidir kral, sen nasılsın? Kumarhanemiz açık, !yardım yazarak ortamı şenlendirebilirsin.")
+        await message.channel.send("İyidir kral, sen nasılsın? ne yapacağını bilmiyorsan !yardim yazabilirsin.")
         return
-
-    # 🤬 KÜFÜR FİLTRESİ
     if "orusbu" in msg:
         await message.delete()
-        await message.channel.send(f"{message.author.mention} düzgün konuş hırrım, burası KAJUNV36!")
+        await message.channel.send(f"{message.author.mention} düzgün konuş hırrım!")
         return
-
     await bot.process_commands(message)
 
-# --- KOMUTLAR (Yardım, Ekonomi, Kumar) ---
+# --- KOMUTLAR ---
 @bot.command()
 async def yardim(ctx):
     embed = discord.Embed(title="🚀 KAJUNV36 TAM SÜRÜM", color=discord.Color.gold())
-    embed.add_field(name="💰 Ekonomi", value="`!cüzdan`, `!günlük`, `!gönder @üye [miktar]`", inline=False)
-    embed.add_field(name="🎰 Kumar", value="`!cf [miktar]`, `!slot [miktar]`, `!bj [miktar]`", inline=False)
-    embed.add_field(name="📦 Kasa & Eğlence", value="`!kasaac` (500 Coin), `!zar` ve 'selam/sa/naber'", inline=False)
-    embed.add_field(name="🛠️ Yönetim", value="`!ban @üye`, `!unban ID`, `!sil [sayı]`", inline=False)
-    embed.set_footer(text="KAJUNV36 #ZİRVE")
+    embed.add_field(name="💰 Ekonomi", value="`!cüzdan`, `!günlük`, `!gönder @üye [miktar]`")
+    embed.add_field(name="🎰 Kumar", value="`!cf [miktar]`, `!bj [miktar]`")
+    embed.add_field(name="📦 Kasa", value="`!kasaac` (500 Coin - 10M Çıkma Şansı!)")
+    embed.add_field(name="🛠️ Yönetim", value="`!sil [sayı]`, `!ban @üye`")
     await ctx.send(embed=embed)
 
-@bot.command(aliases=['para', 'cash'])
-async def cuzdan(ctx):
+@bot.command(aliases=['para'])
+async def cüzdan(ctx):
     await ctx.send(f"💰 Bakiyen: **{get_balance(ctx.author.id)} Kajun Coin**")
 
 @bot.command()
-async def gunluk(ctx):
+async def günlük(ctx):
     update_balance(ctx.author.id, 500)
-    await ctx.send("💵 Günlük 500 coin maaşın yattı reis!")
-
-@bot.command()
-async def gönder(ctx, member: discord.Member, miktar: int):
-    if miktar <= 0 or get_balance(ctx.author.id) < miktar: return await ctx.send("❌ Para yetersiz!")
-    update_balance(ctx.author.id, -miktar)
-    update_balance(member.id, miktar)
-    await ctx.send(f"✅ {ctx.author.mention}, {member.mention} kullanıcısına **{miktar}** coin ateşledi!")
+    await ctx.send("💵 500 coin maaşın yattı reis!")
 
 @bot.command()
 async def kasaac(ctx):
-    if get_balance(ctx.author.id) < 500: return await ctx.send("❌ Kasa açmak için 250 coin lazım!")
+    if get_balance(ctx.author.id) < 500: return await ctx.send("❌ Kasa açmak için 500 coin lazım!")
     update_balance(ctx.author.id, -500)
-    odul = random.choice([50, 100, 300, 500, 1500, 100000000, 50000, 20000, 100000])
+    # 10 Milyon çıkma ihtimalini %1 yaptım (weights içindeki 1)
+    odul = random.choices(
+        [50, 100, 300, 500, 1500, 10000000], 
+        weights=[30, 30, 20, 10, 9, 1], 
+        k=1
+    )[0]
     update_balance(ctx.author.id, odul)
     await ctx.send(f"📦 Kasadan **{odul}** Kajun Coin çıktı!")
 
 @bot.command()
-async def cf(ctx, miktar: int):
-    if miktar <= 0 or get_balance(ctx.author.id) < miktar: return await ctx.send("❌ Para yetersiz!")
-    if random.choice([True, False]):
-        update_balance(ctx.author.id, miktar); await ctx.send(f"🪙 Yazı-Tura kazandın! +{miktar}")
-    else:
-        update_balance(ctx.author.id, -miktar); await ctx.send(f"💀 Kaybettin reis... -{miktar}")
-
-@bot.command()
 async def bj(ctx, miktar: int):
-    if miktar <= 0 or get_balance(ctx.author.id) < miktar: return await ctx.send("❌ Para yok!")
-    if random.randint(1, 100) > 50:
-        update_balance(ctx.author.id, miktar); await ctx.send(f"🃏 Blackjack kazandın! +{miktar}")
+    if miktar <= 0 or get_balance(ctx.author.id) < miktar: return await ctx.send("❌ Para yetersiz!")
+    
+    player_cards = [random.randint(1, 11), random.randint(1, 11)]
+    dealer_cards = [random.randint(1, 11), random.randint(1, 11)]
+    
+    async def get_msg():
+        return f"🃏 Senin elin: **{player_cards}** (Toplam: {sum(player_cards)})\n🕵️ Kasanın kartı: **[{dealer_cards[0]}, ?]**\n\nKart çekmek için **h**, kalmak için **s** yaz."
+
+    game_msg = await ctx.send(await get_msg())
+
+    def check(m):
+        return m.author == ctx.author and m.content.lower() in ['h', 's']
+
+    while sum(player_cards) < 21:
+        try:
+            msg = await bot.wait_for('message', timeout=30.0, check=check)
+            if msg.content.lower() == 'h':
+                player_cards.append(random.randint(1, 11))
+                if sum(player_cards) > 21:
+                    update_balance(ctx.author.id, -miktar)
+                    return await ctx.send(f"💥 Toplam {sum(player_cards)} oldu, patladın reis! **{miktar}** gitti.")
+                await game_msg.edit(content=await get_msg())
+            else: break
+        except asyncio.TimeoutError:
+            return await ctx.send("Zaman doldu, oyun iptal.")
+
+    while sum(dealer_cards) < 17:
+        dealer_cards.append(random.randint(1, 11))
+
+    p_total = sum(player_cards)
+    d_total = sum(dealer_cards)
+
+    result = f"🃏 Senin: {p_total} | 🕵️ Kasa: {d_total}\n"
+    if d_total > 21 or p_total > d_total:
+        update_balance(ctx.author.id, miktar)
+        await ctx.send(result + f"✅ Kazandın reis! +{miktar}")
+    elif p_total < d_total:
+        update_balance(ctx.author.id, -miktar)
+        await ctx.send(result + f"💀 Kasa kazandı! -{miktar}")
     else:
-        update_balance(ctx.author.id, -miktar); await ctx.send(f"🃏 Kasa kazandı, **{miktar}** uçtu.")
+        await ctx.send(result + "🤝 Berabere, para iade.")
 
-@bot.command()
-async def zar(ctx):
-    await ctx.send(f"🎲 Zar: **{random.randint(1, 6)}**")
-
-# --- YÖNETİM KOMUTLARI ---
 @bot.command()
 @commands.has_permissions(manage_messages=True)
 async def sil(ctx, sayi: int):
     await ctx.channel.purge(limit=sayi + 1)
 
-@bot.command()
-@commands.has_permissions(ban_members=True)
-async def ban(ctx, member: discord.Member, *, sebep=None):
-    await member.ban(reason=sebep)
-    await ctx.send(f"❌ {member.name} sunucudan banlandı!")
-
 @bot.event
 async def on_ready():
-    print(f'KAJUNV36 FULL SİSTEM BAŞLATILDI!')
+    print(f'KAJUNV36 HAZIR VE NAZIR!')
 
 if __name__ == "__main__":
     keep_alive()
     bot.run(os.environ.get('DISCORD_TOKEN'))
-
