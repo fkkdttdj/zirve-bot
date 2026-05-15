@@ -98,7 +98,13 @@ async def gönder(ctx, member: discord.Member, miktar: int):
 async def kasaac(ctx):
     if get_balance(ctx.author.id) < 500: return await ctx.send("❌ Kasa açmak için 250 coin lazım!")
     update_balance(ctx.author.id, -500)
-    odul = random.choice([50, 100, 300, 500, 1500, 100000000])
+        # 500 coinlik kasa, içinden 10M çıkma şansı var ama zor
+    odul = random.choices(
+        [50, 100, 300, 500, 1500, 100000000], 
+        weights=[30, 30, 20, 10, 9, 1], # Burada 1 yazan 10M'in çıkma ihtimali (en düşük)
+        k=20
+    )[0]
+
     update_balance(ctx.author.id, odul)
     await ctx.send(f"📦 Kasadan **{odul}** Kajun Coin çıktı!")
 
