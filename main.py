@@ -91,9 +91,16 @@ async def v36(ctx, miktar: int):
 # --- DİĞER KOMUTLAR ---
 @bot.command()
 async def yardim(ctx):
-    embed = discord.Embed(title="KAJUNV36 MENÜ", color=0xffd700)
-    embed.add_field(name="💰 Ekonomi", value="`!cuzdan`, `!günlük`, `!gönder`", inline=False)
-    embed.add_field(name="🎰 Kumar", value="`!bj`, `!kasaac`", inline=False)
+    embed = discord.Embed(
+        title="🚀 KAJUNV36 TAM SÜRÜM", 
+        description="Sunucu içindeki tüm aktif sistemler aşağıdadır.",
+        color=discord.Color.gold()
+    )
+    embed.add_field(name="💰 Ekonomi", value="`!cuzdan`, `!günlük`, `!gönder @üye [miktar]`", inline=False)
+    embed.add_field(name="🎰 Kumar", value="`!bj [miktar]`, `!kasaac` (500 Coin)", inline=False)
+    embed.add_field(name="🔊 Ses Takibi", value="AFK SES kanalında durarak otomatik rütbe kazanabilirsin.", inline=False)
+    embed.add_field(name="🛠️ Yönetim", value="`!sil [sayı]`", inline=False)
+    embed.set_footer(text="KAJUNV36 #ZİRVE")
     await ctx.send(embed=embed)
 
 @bot.command()
