@@ -1,0 +1,36 @@
+import discord
+from discord.ext import commands
+import random
+from flask import Flask
+from threading import Thread
+
+--- 7/24 AKTİF TUTMA SİSTEMİ (WEB SERVER) ---
+app = Flask('')
+
+@app.route('/')
+def home():
+return "Bot aktif ve Zirve'de!"
+
+def run():
+app.run(host='0.0.0.0', port=8080)
+
+def keep_alive():
+t = Thread(target=run)
+t.start()
+
+--- BOT SİSTEMİ ---
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+
+bot = commands.Bot(command_prefix='!', intents=intents, case_insensitive=True)
+
+(Buraya dün hazırladığımız Kasa, XP ve diğer komutlarını aynen kopyala/yapıştır yapabilirsin)
+
+@bot.event
+async def on_ready():
+print(f'Reis, sistem 7/24 modunda hazır! Bot: {bot.user}')
+
+--- ÇALIŞTIRMA ---
+keep_alive() # Bu satır botu uyutmaz
+bot.run('MTUwNDU0MjA2MTA1ODE5OTcxMw.GyRlQO.9NMqjTcGEZzJLhKzr0oO5j-F9vh-FUoWpyz2Rc')
