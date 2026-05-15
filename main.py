@@ -26,17 +26,15 @@ envanterler = {}
 async def yardim(ctx):
     embed = discord.Embed(
         title="🚀 Ezxayomisari Bot Kullanım Kılavuzu",
-        description="Sunucudaki tüm komutlar ve görevleri aşağıdadır. Bu mesajı sabitleyerek her zaman görebilirsiniz!",
+        description="Sunucudaki tüm komutlar aşağıdadır. Bu mesajı sabitleyerek her zaman görebilirsiniz!",
         color=discord.Color.gold()
     )
     embed.add_field(name="🎮 Oyunlar", value="`!zar`: Animasyonlu zar atar.\n`!yazitura`: Para çevirir.\n`!kasaac`: Kasa açıp ödül kazandırır.\n`!envanter`: Kazandığın ödülleri gösterir.", inline=False)
-    embed.add_field(name="🛠️ Yönetim", value="`!ban @üye`: Üyeyi yasaklar.\n`!sil [sayı]`: Mesajları temizler.", inline=False)
-    embed.add_field(name="🛡️ Koruma", value="**Küfür Filtresi**: 'orusbu' kelimesini anında siler ve uyarır.", inline=False)
+    embed.add_field(name="🛠️ Yönetim", value="`!ban @üye`: Üyeyi yasaklar.\n`!unban İsim#0000`: Banı kaldırır.\n`!sil [sayı]`: Mesajları temizler.", inline=False)
+    embed.add_field(name="🛡️ Koruma", value="**Küfür Filtresi**: 'orusbu' kelimesini anında siler.", inline=False)
     embed.add_field(name="💬 Sohbet", value="**naber**: Botla selamlaşmanı sağlar.", inline=False)
-    embed.set_footer(text="KAJUNV36 #ZİRVE")
-    
-    yardim_mesaji = await ctx.send(embed=embed)
-    # Mesajın kaybolmaması için sadece bilgilendirme yapıyoruz, silme komutu eklemiyoruz.
+    embed.set_footer(text="KAJUNV36 #PRIME")
+    await ctx.send(embed=embed)
 
 # --- MODERASYON ---
 @bot.command()
@@ -44,6 +42,18 @@ async def yardim(ctx):
 async def ban(ctx, member: discord.Member, *, reason="Sebep belirtilmedi"):
     await member.ban(reason=reason)
     await ctx.send(f"🚫 **{member.name}** banlandı!")
+
+@bot.command()
+@commands.has_permissions(ban_members=True)
+async def unban(ctx, *, member_name):
+    banned_users = [entry async for entry in ctx.guild.bans()]
+    for ban_entry in banned_users:
+        user = ban_entry.user
+        if (f"{user.name}#{user.discriminator}" == member_name) or (user.name == member_name):
+            await ctx.guild.unban(user)
+            await ctx.send(f"✅ **{user.name}** kullanıcısının banı kaldırıldı reis, buyursun gelsin!")
+            return
+    await ctx.send(f"❓ Reis bu isimde birini banlılar listesinde bulamadım.")
 
 @bot.command()
 @commands.has_permissions(manage_messages=True)
@@ -95,7 +105,7 @@ async def on_message(message):
         await message.channel.send(f"{message.author.mention} ne diyon lan hırrım burası KAJUNV36 he istediğine istediğin gibi orusbu diyemezsin burda!")
         return
     if msg == "naber":
-        await message.channel.send(f"İyi kral sen nasılsın beni nasıl kullanabileceğini öğrenmek için !yardım yazabilirsin.")
+        await message.channel.send(f"İyi kral sen nasılsın beni nasıl kullanabileceğini öğrenmek için !yardim yazabilirsin.")
         return
     await bot.process_commands(message)
 
