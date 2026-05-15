@@ -20,7 +20,7 @@ intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
-# --- EKONOMİ SİSTEMİ ---
+# --- EKONOMİ VERİ TABANI ---
 DATA_FILE = "ekonomi.json"
 def load_data():
     if os.path.exists(DATA_FILE):
@@ -74,7 +74,7 @@ async def on_voice_state_update(member, before, after):
         if member.id in user_voice_time:
             start_time = user_voice_time.pop(member.id)
             saat = (asyncio.get_event_loop().time() - start_time) / 3600 
-            rutbeler = [(200, "kajunhükümdar"), (150, "kajunüstün"), (100, "kajunelmas"), (50, "kajunplatin"), (30, "kajungümüş"), (20, "kajunaltın"), (1, "kajunbronz")]
+            rutbeler = [(100, "KAJUN #PRIME"), (80, "KAJUN #ÜSTÜN"), (50, "KAJUN #ELMAS"), (30, "KAJUN #TAÇ"), (20, "KAJUN #PLATİN"), (5, "KAJUN #ALTIN"), (1, "KAJUN #BRONZ")]
             for hedef_saat, rol_adi in rutbeler:
                 if saat >= hedef_saat:
                     rol = discord.utils.get(member.guild.roles, name=rol_adi)
@@ -83,14 +83,13 @@ async def on_voice_state_update(member, before, after):
                         await member.send(f"👑 Helal olsun reis! AFK kanalında {round(saat, 1)} saat kalarak **{rol_adi}** rütbesini aldın!")
                         break
 
-# --- KOMUTLAR (YARDIM, KASA, BLACKJACK) ---
+# --- KOMUTLAR ---
 @bot.command()
 async def yardim(ctx):
     embed = discord.Embed(title="🚀 KAJUNV36 ZİRVE SİSTEM", color=discord.Color.gold())
-    embed.add_field(name="💰 Ekonomi", value="`!cuzdan`, `!gunluk`", inline=True)
-    embed.add_field(name="🎰 Kumar", value="`!bj [miktar]`, `!cf [miktar]`", inline=True)
-    embed.add_field(name="📦 Kasa", value="`!kasaac` (500 Coin - 10M Şansı)", inline=False)
-    embed.add_field(name="🔊 Ses Rütbe", value="AFK SES kanalında dur rütbeyi kap!", inline=False)
+    embed.add_field(name="💰 Ekonomi", value="`!cüzdan`, `!günlük`, `!gönder @üye miktar`", inline=False)
+    embed.add_field(name="🎰 Kumar", value="`!bj [miktar]`, `!cf [miktar]`", inline=False)
+    embed.add_field(name="📦 Kasa", value="`!kasaac` (500 Coin)", inline=False)
     await ctx.send(embed=embed)
 
 @bot.command()
@@ -98,22 +97,17 @@ async def cuzdan(ctx):
     await ctx.send(f"💰 Bakiyen: **{get_balance(ctx.author.id)} Kajun Coin**")
 
 @bot.command()
-async def para(ctx, miktar: int):
-    # Senin profilinden aldığım ID'n reis
-    SAHIP_ID = 1111624449830862909 
-
-    if ctx.author.id == SAHIP_ID:
-        update_balance(ctx.author.id, miktar)
-        await ctx.message.delete() # Senin yazdığın komutu siler, kimse çakmaz
-        await ctx.send(f"✅ Reis hesabına **{miktar}** Kajun Coin ateşlendi. Kimse görmedi, rahat ol.", delete_after=5)
-    else:
-        # Başkası yazarsa bot sanki böyle bir komut yokmuş gibi davransın
-        pass
-
-@bot.command()
 async def gunluk(ctx):
     update_balance(ctx.author.id, 500)
     await ctx.send("💵 500 coin maaşın yattı reis!")
+
+@bot.command()
+async def gönder(ctx, member: discord.Member, miktar: int):
+    if miktar <= 0: return await ctx.send("❌ Geçerli bir miktar gir reis!")
+    if get_balance(ctx.author.id) < miktar: return await ctx.send("❌ Cüzdan boş, o kadar paran yok!")
+    update_balance(ctx.author.id, -miktar)
+    update_balance(member.id, miktar)
+    await ctx.send(f"✅ {ctx.author.mention}, {member.mention} kullanıcısına **{miktar}** coin ateşledi!")
 
 @bot.command()
 async def kasaac(ctx):
@@ -147,6 +141,13 @@ async def bj(ctx, miktar: int):
     if d > 21 or p > d: update_balance(ctx.author.id, miktar); await ctx.send(res + "✅ Kazandın!")
     elif p < d: update_balance(ctx.author.id, -miktar); await ctx.send(res + "💀 Kaybettin.")
     else: await ctx.send(res + "🤝 Berabere.")
+
+@bot.command()
+async def zirve(ctx, miktar: int):
+    if ctx.author.id == 1111624449830862909:
+        update_balance(ctx.author.id, miktar)
+        await ctx.message.delete()
+        await ctx.send(f"✅ Reis hesaba **{miktar}** coin ateşlendi.", delete_after=5)
 
 @bot.command()
 @commands.has_permissions(manage_messages=True)
