@@ -52,7 +52,7 @@ async def on_message(message):
         await message.channel.send(f"Aleyküm Selam {message.author.mention} hoş geldin reis!")
         return
     if msg == "naber":
-        await message.channel.send("İyidir kral, sen nasılsın? ne yapacağını bilmiyorsan !yardim yazabilirsin.")
+        await message.channel.send("İyidir kral, sen nasılsın? ne yapacağını bilmiyosan #duyuru ya bakabilirsin veya !yardim yazabilirsin.")
         return
     if "orusbu" in msg:
         await message.delete()
@@ -64,18 +64,18 @@ async def on_message(message):
 @bot.command()
 async def yardim(ctx):
     embed = discord.Embed(title="🚀 KAJUNV36 TAM SÜRÜM", color=discord.Color.gold())
-    embed.add_field(name="💰 Ekonomi", value="`!cüzdan`, `!günlük`, `!gönder @üye [miktar]`")
+    embed.add_field(name="💰 Ekonomi", value="`!cuzdan`, `!gunluk`, `!gönder @üye [miktar]`")
     embed.add_field(name="🎰 Kumar", value="`!cf [miktar]`, `!bj [miktar]`")
     embed.add_field(name="📦 Kasa", value="`!kasaac` (500 Coin - 10M Çıkma Şansı!)")
     embed.add_field(name="🛠️ Yönetim", value="`!sil [sayı]`, `!ban @üye`")
     await ctx.send(embed=embed)
 
 @bot.command(aliases=['para'])
-async def cüzdan(ctx):
+async def cuzdan(ctx):
     await ctx.send(f"💰 Bakiyen: **{get_balance(ctx.author.id)} Kajun Coin**")
 
 @bot.command()
-async def günlük(ctx):
+async def gunluk(ctx):
     update_balance(ctx.author.id, 500)
     await ctx.send("💵 500 coin maaşın yattı reis!")
 
