@@ -56,7 +56,7 @@ async def on_message(message):
         return
 
     if msg == "naber":
-        await message.channel.send("İyidir kral, sen nasılsın? Kumarhanemiz açık, !yardım yazarak bakabilirsin")
+        await message.channel.send("İyidir kral, sen nasılsın? Kumarhanemiz açık, !yardım yazarak ortamı şenlendirebilirsin.")
         return
 
     # 🤬 KÜFÜR FİLTRESİ
@@ -73,17 +73,17 @@ async def yardim(ctx):
     embed = discord.Embed(title="🚀 KAJUNV36 TAM SÜRÜM", color=discord.Color.gold())
     embed.add_field(name="💰 Ekonomi", value="`!cüzdan`, `!günlük`, `!gönder @üye [miktar]`", inline=False)
     embed.add_field(name="🎰 Kumar", value="`!cf [miktar]`, `!slot [miktar]`, `!bj [miktar]`", inline=False)
-    embed.add_field(name="📦 Kasa & Eğlence", value="`!kasaac` (250 Coin), `!zar` ve 'selam/sa/naber'", inline=False)
+    embed.add_field(name="📦 Kasa & Eğlence", value="`!kasaac` (500 Coin), `!zar` ve 'selam/sa/naber'", inline=False)
     embed.add_field(name="🛠️ Yönetim", value="`!ban @üye`, `!unban ID`, `!sil [sayı]`", inline=False)
     embed.set_footer(text="KAJUNV36 #ZİRVE")
     await ctx.send(embed=embed)
 
 @bot.command(aliases=['para', 'cash'])
-async def cüzdan(ctx):
+async def cuzdan(ctx):
     await ctx.send(f"💰 Bakiyen: **{get_balance(ctx.author.id)} Kajun Coin**")
 
 @bot.command()
-async def günlük(ctx):
+async def gunluk(ctx):
     update_balance(ctx.author.id, 500)
     await ctx.send("💵 Günlük 500 coin maaşın yattı reis!")
 
@@ -98,13 +98,7 @@ async def gönder(ctx, member: discord.Member, miktar: int):
 async def kasaac(ctx):
     if get_balance(ctx.author.id) < 500: return await ctx.send("❌ Kasa açmak için 250 coin lazım!")
     update_balance(ctx.author.id, -500)
-        # 500 coinlik kasa, içinden 10M çıkma şansı var ama zor
-    odul = random.choices(
-        [50, 100, 300, 500, 1500, 100000000], 
-        weights=[30, 30, 20, 10, 9, 1], # Burada 1 yazan 10M'in çıkma ihtimali (en düşük)
-        k=20
-    )[0]
-
+    odul = random.choice([50, 100, 300, 500, 1500, 100000000, 50000, 20000, 100000])
     update_balance(ctx.author.id, odul)
     await ctx.send(f"📦 Kasadan **{odul}** Kajun Coin çıktı!")
 
@@ -147,3 +141,4 @@ async def on_ready():
 if __name__ == "__main__":
     keep_alive()
     bot.run(os.environ.get('DISCORD_TOKEN'))
+
