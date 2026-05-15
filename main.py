@@ -131,7 +131,7 @@ async def on_message(message):
     if "orusbu" in msg:
         await message.delete(); await message.channel.send("Racon kesme, mesajın silindi!")
         return
-    if msg == "naber" "ne yapcam":
+    if msg == "naber":
         await message.channel.send("İyidir kral, kumarhanemiz açıldı !yardim yaz gör")
         return
     await bot.process_commands(message)
