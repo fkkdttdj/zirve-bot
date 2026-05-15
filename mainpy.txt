@@ -1,4 +1,5 @@
 import discord
+import os
 from discord.ext import commands
 import random
 from flask import Flask
@@ -25,12 +26,11 @@ intents.members = True
 
 bot = commands.Bot(command_prefix='!', intents=intents, case_insensitive=True)
 
-(Buraya dün hazırladığımız Kasa, XP ve diğer komutlarını aynen kopyala/yapıştır yapabilirsin)
-
 @bot.event
 async def on_ready():
 print(f'Reis, sistem 7/24 modunda hazır! Bot: {bot.user}')
 
---- ÇALIŞTIRMA ---
-keep_alive() # Bu satır botu uyutmaz
-bot.run('MTUwNDU0MjA2MTA1ODE5OTcxMw.GyRlQO.9NMqjTcGEZzJLhKzr0oO5j-F9vh-FUoWpyz2Rc')
+# En alttaki çalıştırma kısmı böyle olacak:
+if __name__ == "__main__":
+    keep_alive()
+    bot.run(os.environ.get('DISCORD_TOKEN'))
