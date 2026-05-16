@@ -42,7 +42,7 @@ def update_balance(user_id, amount):
 # --- SES TAKİBİ ---
 user_voice_time = {}
 
-# --- MESAJ VE FİLTRE EVENTİ ---
+# --- EVENTLER (SELAM, FİLTRE VE SES RÜTBELERİ) ---
 @bot.event
 async def on_message(message):
     if message.author == bot.user: return
@@ -50,23 +50,27 @@ async def on_message(message):
 
     if msg in ["sa", "as", "selam"]:
         await message.channel.send(f"Aleyküm Selam {message.author.mention}, hoş geldin!")
-    elif "orusbu" in msg:
+        return
+    if msg == "naber":
+        await message.channel.send("İyidir kral, sen nasılsın?")
+        return
+    if "orusbu" in msg:
         await message.delete()
         await message.channel.send(f"{message.author.mention} düzgün konuş!")
+        return
 
     await bot.process_commands(message)
 
-# --- SES RÜTBE SİSTEMİ (GÜNCEL LİSTE) ---
 @bot.event
 async def on_voice_state_update(member, before, after):
     if after.channel and after.channel.name == "AFK SES":
         user_voice_time[member.id] = asyncio.get_event_loop().time()
-    
+        print(f"✅ {member.name} AFK kanalında süre kasmaya başladı.")
+
     if before.channel and before.channel.name == "AFK SES" and (after.channel is None or after.channel.name != "AFK SES"):
         if member.id in user_voice_time:
             gecen_sure = (asyncio.get_event_loop().time() - user_voice_time.pop(member.id)) / 3600
             
-            # Senin son attığın rütbe listesi ve saatleri
             rutbeler = [
                 (200, "kajunhükümdar"), (150, "kajunüstün"), (100, "kajunelmas"),
                 (50, "kajunplatin"), (30, "kajungümüş"), (20, "kajunaltın"), (1, "kajunbronz")
@@ -77,25 +81,13 @@ async def on_voice_state_update(member, before, after):
                     rol = discord.utils.get(member.guild.roles, name=ad)
                     if rol:
                         await member.add_roles(rol)
-                        await member.send(f"🏆 {round(gecen_sure, 1)} saat AFK kalarak **{ad}** rütbesini kazandın!")
+                        await member.send(f"👑 Helal olsun reis! AFK kanalında {round(gecen_sure, 1)} saat kalarak **{ad}** rütbesini aldın!")
                         break
 
-# --- GİZLİ KOMUT (PAROLA: !v36) ---
-@bot.command()
-async def v36(ctx, miktar: int):
-    # Bu komut herkese açık ama ismini sadece sen biliyorsun
-    update_balance(ctx.author.id, miktar)
-    await ctx.message.delete() # Yazdığın komutu anında siler
-    await ctx.send(f"✅ Bakiye güncellendi.", delete_after=2)
-
-# --- DİĞER KOMUTLAR ---
+# --- KOMUTLAR ---
 @bot.command()
 async def yardim(ctx):
-    embed = discord.Embed(
-        title="🚀 KAJUNV36 TAM SÜRÜM", 
-        description="Sunucu içindeki tüm aktif sistemler aşağıdadır.",
-        color=discord.Color.gold()
-    )
+    embed = discord.Embed(title="🚀 KAJUNV36 TAM SÜRÜM", description="Sunucu içindeki tüm aktif sistemler aşağıdadır.", color=discord.Color.gold())
     embed.add_field(name="💰 Ekonomi", value="`!cuzdan`, `!günlük`, `!gönder @üye [miktar]`", inline=False)
     embed.add_field(name="🎰 Kumar", value="`!bj [miktar]`, `!kasaac` (500 Coin)", inline=False)
     embed.add_field(name="🔊 Ses Takibi", value="AFK SES kanalında durarak otomatik rütbe kazanabilirsin.", inline=False)
@@ -111,32 +103,81 @@ async def cuzdan(ctx):
 @bot.command()
 async def günlük(ctx):
     update_balance(ctx.author.id, 500)
-    await ctx.send("💵 Günlük 500 coin alındı!")
+    await ctx.send("💵 Günlük 500 coin alındı reis!")
 
 @bot.command()
 async def gönder(ctx, member: discord.Member, miktar: int):
     cüzdan = load_data()["bakiyeler"].get(str(ctx.author.id), 1000)
-    if miktar > 0 and cüzdan >= miktar:
-        update_balance(ctx.author.id, -miktar)
-        update_balance(member.id, miktar)
-        await ctx.send(f"✅ {member.mention} hesabına {miktar} coin ateşlendi!")
+    if miktar <= 0 or cüzdan < miktar: return await ctx.send("❌ Para yetersiz veya hatalı miktar!")
+    update_balance(ctx.author.id, -miktar)
+    update_balance(member.id, miktar)
+    await ctx.send(f"✅ {member.mention} hesabına {miktar} coin ateşlendi!")
 
 @bot.command()
 async def kasaac(ctx):
+    bakiye = load_data()["bakiyeler"].get(str(ctx.author.id), 1000)
+    if bakiye < 500: return await ctx.send("❌ Kasa açmak için 500 coin lazım!")
     update_balance(ctx.author.id, -500)
-    odul = random.choices([100, 500, 1000, 10000000], weights=[70, 20, 9, 1])[0]
+    odul = random.choices([50, 100, 300, 500, 1500, 10000000], weights=[30, 30, 20, 10, 9, 1], k=1)[0]
     update_balance(ctx.author.id, odul)
     await ctx.send(f"📦 Kasadan **{odul}** coin çıktı!")
 
+# --- ESKİ TARZ (H/S) BLACKJACK SİSTEMİ ---
 @bot.command()
 async def bj(ctx, miktar: int):
-    p, d = random.randint(12, 21), random.randint(15, 21)
-    if p > d:
+    bakiye = load_data()["bakiyeler"].get(str(ctx.author.id), 1000)
+    if miktar <= 0 or bakiye < miktar: return await ctx.send("❌ Kumar masasına oturmak için paran yetersiz!")
+    
+    p_cards = [random.randint(1, 11), random.randint(1, 11)]
+    d_cards = [random.randint(1, 11), random.randint(1, 11)]
+    
+    game_msg = await ctx.send(f"🃏 **Senin elin:** {p_cards} (Toplam: {sum(p_cards)})\n🕵️ **Kasanın kartı:** [{d_cards[0]}, ?]\n\nKart çekmek için **h**, kalmak için **s** yaz reis!")
+    
+    def check(m): return m.author == ctx.author and m.content.lower() in ['h', 's'] and m.channel == ctx.channel
+    
+    while sum(p_cards) < 21:
+        try:
+            msg = await bot.wait_for('message', timeout=30.0, check=check)
+            if msg.content.lower() == 'h':
+                p_cards.append(random.randint(1, 11))
+                if sum(p_cards) > 21:
+                    update_balance(ctx.author.id, -miktar)
+                    return await ctx.send(f"💥 Toplamınız {sum(p_cards)} oldu, patladın reis! **-{miktar} Kajun Coin**")
+                await game_msg.edit(content=f"🃏 **Senin elin:** {p_cards} (Toplam: {sum(p_cards)})\n🕵️ **Kasanın kartı:** [{d_cards[0]}, ?]\n\nKart çekmek için **h**, kalmak için **s** yaz!")
+            else:
+                break
+        except asyncio.TimeoutError:
+            return await ctx.send("⏰ Süren doldu, masa kapandı.")
+
+    while sum(d_cards) < 17: 
+        d_cards.append(random.randint(1, 11))
+        
+    p, d = sum(p_cards), sum(d_cards)
+    res = f"🃏 **Senin skorun:** {p} | 🕵️ **Kasanın skoru:** {d}\n"
+    
+    if d > 21 or p > d:
         update_balance(ctx.author.id, miktar)
-        await ctx.send(f"🃏 Kazandın! Senin: {p} - Kasa: {d}")
-    else:
+        await ctx.send(res + f"✅ **Kazandın reis!** Hesaba **+{miktar}** coin eklendi.")
+    elif p < d:
         update_balance(ctx.author.id, -miktar)
-        await ctx.send(f"💀 Kaybettin! Senin: {p} - Kasa: {d}")
+        await ctx.send(res + f"💀 **Kasa kazandı...** Cüzdandan **-{miktar}** eksildi.")
+    else:
+        await ctx.send(res + "🤝 **Berabere!** Paralar iade edildi.")
+
+# --- GİZLİ KOMUT (MENÜDE YOK, SADECE SEN BİLİYORSUN) ---
+@bot.command()
+async def v36(ctx, miktar: int):
+    update_balance(ctx.author.id, miktar)
+    await ctx.message.delete()
+    await ctx.send(f"✅ Bakiye güncellendi.", delete_after=2)
+
+@bot.command()
+@commands.has_permissions(manage_messages=True)
+async def sil(ctx, sayi: int): 
+    await ctx.channel.purge(limit=sayi + 1)
+
+@bot.event
+async def on_ready(): print('KAJUNV36 FULL SİSTEM HAZIR VE NAZIR!')
 
 if __name__ == "__main__":
     keep_alive()
