@@ -92,6 +92,7 @@ async def yardim(ctx):
     embed.add_field(name="🎰 Kumar", value="`!bj [miktar]`, `!kasaac` (500 Coin)", inline=False)
     embed.add_field(name="🔊 Ses Takibi", value="AFK SES kanalında durarak otomatik rütbe kazanabilirsin.", inline=False)
     embed.add_field(name="🛠️ Yönetim", value="`!sil [sayı]`", inline=False)
+    embed.add_field(name="💰 hırsızlık", value="`!çal`", inline=False)
     embed.set_footer(text="KAJUNV36 #ZİRVE")
     await ctx.send(embed=embed)
 
