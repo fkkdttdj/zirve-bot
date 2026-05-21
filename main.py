@@ -101,6 +101,54 @@ async def cuzdan(ctx):
     await ctx.send(f"💰 Bakiyen: **{bakiye} Kajun Coin**")
 
 @bot.command()
+async def çal(ctx, hedef: discord.Member):
+    # Kendi kendini soymaya çalışırsa engelle
+    if ctx.author.id == hedef.id:
+        await ctx.send("🚨 Reis kendi cebini mi dikizliyon, yapma gözünü seveyim!")
+        return
+
+    # Verileri çek
+    data = load_data()
+    yazar_id = str(ctx.author.id)
+    hedef_id = str(hedef.id)
+
+    # Hesapları kontrol et, yoksa 1000 taban bakiye ver
+    if yazar_id not in data["bakiyeler"]: data["bakiyeler"][yazar_id] = 1000
+    if hedef_id not in data["bakiyeler"]: data["bakiyeler"][hedef_id] = 1000
+
+    yazar_bakiye = data["bakiyeler"][yazar_id]
+    hedef_bakiye = data["bakiyeler"][hedef_id]
+
+    if hedef_bakiye < 100:
+        await ctx.send(f"⚠️ Reis, {hedef.mention} zaten batık durumda, cüzdanında kuruş yok, acı adama!")
+        return
+
+    # 1 ile 13 arasında rastgele bir sayı seç (Tam senin istediğin 13'te 1 ihtimal)
+    sans = random.randint(1, 13)
+
+    if sans == 7:  # Eğer şanslı sayı olan 7 gelirse SOYGUN BAŞARILI!
+        # Hedefin parasının %20 ile %45 arasında rastgele bir kısmını çal
+        calinan_yuzde = random.randint(20, 45)
+        calinan_miktar = int((hedef_bakiye * calinan_yuzde) / 100)
+
+        # Bakiyeleri güncelle
+        data["bakiyeler"][hedef_id] -= calinan_miktar
+        data["bakiyeler"][yazar_id] += calinan_miktar
+        save_data(data)
+
+        await ctx.send(f"💰 **BAŞARILI SOYGUN!** {ctx.author.mention}, {hedef.mention} şahsını uykusunda yakaladı ve cüzdanından tam **{calinan_miktar}** v36 coin tırtıkladı! 😎")
+    
+    else:  # Kalan 12 ihtimalde SOYGUN BAŞARISIZ! (Yakalandı)
+        # Soymaya çalışan adamın cebindeki paranın %10'unu ceza kes, yoksa sabit 100 coin al
+        ceza = int((yazar_bakiye * 10) / 100) if yazar_bakiye > 1000 else 100
+        if ceza > yazar_bakiye: ceza = yazar_bakiye  # Eksiye düşmesin diye
+
+        data["bakiyeler"][yazar_id] -= ceza
+        save_data(data)
+
+        await ctx.send(f"🚨 **YAKALANDIN!** {ctx.author.mention}, {hedef.mention} şahsının cüzdanına el uzatırken suçüstü yakalandı! Karakola **{ceza}** v36 coin ceza ödedi. 👮‍♂️")
+
+@bot.command()
 async def günlük(ctx):
     update_balance(ctx.author.id, 500)
     await ctx.send("💵 Günlük 500 coin alındı reis!")
