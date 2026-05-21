@@ -417,3 +417,4 @@ if __name__ == "__main__":
     bot.run(os.environ.get('DISCORD_TOKEN'))
     
 genai.configure(api_key=os.environ.get("GEMINI_TOKEN"))
+ai_model = genai.GenerativeModel('gemini-1.5-flash')
