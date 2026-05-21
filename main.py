@@ -222,7 +222,7 @@ async def rulet(ctx, bahis: int):
 
     # 2. EL VE SONRASI İÇİN DÖNGÜ (Maksimum 5 kere sıkabilir, çünkü 6. zaten kesin mermidir)
     for i in range(1, 5):
-        await ctx.send(f"❓ {ctx.author.mention}, ne yapacaksın? Sohbet kanalına **sık** veya **dur** yaz!")
+        await ctx.send(f"❓ {ctx.author.mention}, ne yapacaksın? **sık** veya **dur** yaz!")
 
         # Kullanıcının "sık" veya "dur" yazmasını bekleme fonksiyonu
         def check(m):
