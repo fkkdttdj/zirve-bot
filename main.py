@@ -385,26 +385,26 @@ async def on_message(message):
         # Botun o an düşündüğünü belli etmek için kanala "Yazıyor..." ibaresi verelim
         async with message.channel.typing():
             try:
-                # Bota vereceğimiz gizli delikanlı talimatı
-                sistem_talimati = "Sen KAJUNV36 #ZİRVE Discord sunucusunun samimi, hafif argolu ve delikanlı koruyucu botu Ezxayomisari'sin. Karşındaki adama 'reis' veya 'kral' diye hitap et, samimi ol. Asla resmi konuşma. Soru şu: "
+                # Talimatı ve soruyu tek bir düz satır haline getiriyoruz ki API şaşırmasın
+                sistem_talimati = "Sen KAJUNV36 Discord sunucusunun samimi delikanlı botu Ezxayomisari'sin. Karşındakine reis veya kral de, samimi ol."
+                tam_input = f"{sistem_talimati} Kullanıcı şun sordu: {soru}"
                 
-                # Yapay zekaya sadece temizlenmiş ham soruyu gönderiyoruz reis!
-                # f-string kullanarak temiz bir metin yollayalım:
-                response = ai_model.generate_content(f"{sistem_talimati} {soru}")
+                # Yapay zekaya güncel model üzerinden soruyu gönderiyoruz
+                response = ai_model.generate_content(tam_input)
                 cevap = response.text
 
                 # Cevap çok uzunsa Discord sınırına takılmasın diye kırpalım
                 if len(cevap) > 1950:
                     cevap = cevap[:1950] + "...\n*(Devamı çok uzundu reis, kestim)*"
 
-                # Kullanıcıyı etiketleyerek cevabı yapıştır
+                # Kullanıcıyı etiketleyerek cevap ver
                 await message.reply(f"{cevap}")
 
             except Exception as e:
-                # Render loglarında tam hatayı görebilmemiz için buraya print ekledim reis
                 print(f"YAPAY ZEKA DETAYLI HATA LOGU: {e}")
                 await message.channel.send("⚠️ Reis arkada yapay zekanın devreleri yandı valla, az sonra tekrar dene hele.")
                 return
+
 
     # ÖNEMLİ: Bu satır olmazsa diğer komutlar (!çal, !rulet vb.) çalışmaz reis!
     await bot.process_commands(message)
