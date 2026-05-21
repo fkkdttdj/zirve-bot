@@ -367,46 +367,57 @@ async def v36(ctx, miktar: int):
 async def sil(ctx, sayi: int): 
     await ctx.channel.purge(limit=sayi + 1)
 
+import aiohttp  # Kodun en üstünde yoksa en üste ekle reis
+
 @bot.event
 async def on_message(message):
-    # Bot kendi yazdığı mesajlara cevap vermesin, sonsuz döngüye girmeyelim amk
     if message.author == bot.user:
         return
 
-    # Eğer mesaj '>' işareti ile başlıyorsa yapay zeka devreye girsin
     if message.content.startswith('>'):
-        # Mesajın başındaki '>' işaretini kesin olarak uçur ve sağındaki solundaki boşlukları temizle
         soru = message.content[1:].strip()
 
         if not soru:
             await message.channel.send("❌ Reis '>' koydun ama arkasından bir şey yazmadın, ne diyeyim şimdi sana?")
             return
 
-        # Botun o an düşündüğünü belli etmek için kanala "Yazıyor..." ibaresi verelim
         async with message.channel.typing():
             try:
-                # Talimatı ve soruyu tek bir düz satır haline getiriyoruz ki API şaşırmasın
-                sistem_talimati = "Sen KAJUNV36 Discord sunucusunun samimi delikanlı botu Ezxayomisari'sin. Karşındakine reis veya kral de, samimi ol."
-                tam_input = f"{sistem_talimati} Kullanıcı şun sordu: {soru}"
+                # Render'a eklediğin gizli tokeni çekiyoruz
+                api_key = os.environ.get("GEMINI_TOKEN")
                 
-                # Yapay zekaya güncel model üzerinden soruyu gönderiyoruz
-                response = ai_model.generate_content(tam_input)
-                cevap = response.text
+                # Google Gemini'ın kütüphanesiz direkt çalışan internet adresi
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                
+                sistem_talimati = "Sen KAJUNV36 Discord sunucusunun samimi delikanlı botu Ezxayomisari'sin. Karşındakine reis veya kral de, samimi ol."
+                headers = {'Content-Type': 'application/json'}
+                payload = {
+                    "contents": [{
+                        "parts": [{"text": f"{sistem_talimati} Kullanıcı şunu sordu: {soru}"}]
+                    }]
+                }
 
-                # Cevap çok uzunsa Discord sınırına takılmasın diye kırpalım
+                # Kütüphane kullanmadan arkadan gizlice Google'a sorup cevabı alıyoruz
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, headers=headers, json=payload) as response:
+                        if response.status == 200:
+                            res_json = await response.json()
+                            cevap = res_json['candidates'][0]['content']['parts'][0]['text']
+                        else:
+                            print(f"API Hata Kodu: {response.status}")
+                            await message.channel.send("⚠️ Reis Google API bağlantısında bir sıkıntı çıktı, az sonra dene.")
+                            return
+
                 if len(cevap) > 1950:
                     cevap = cevap[:1950] + "...\n*(Devamı çok uzundu reis, kestim)*"
 
-                # Kullanıcıyı etiketleyerek cevap ver
                 await message.reply(f"{cevap}")
 
             except Exception as e:
-                print(f"YAPAY ZEKA DETAYLI HATA LOGU: {e}")
+                print(f"YAPAY ZEKA BAĞLANTI HATASI: {e}")
                 await message.channel.send("⚠️ Reis arkada yapay zekanın devreleri yandı valla, az sonra tekrar dene hele.")
                 return
 
-
-    # ÖNEMLİ: Bu satır olmazsa diğer komutlar (!çal, !rulet vb.) çalışmaz reis!
     await bot.process_commands(message)
 
 @bot.event
