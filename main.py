@@ -375,7 +375,7 @@ async def on_message(message):
 
     # Eğer mesaj '>' işareti ile başlıyorsa yapay zeka devreye girsin
     if message.content.startswith('>'):
-        # Başındaki '>' işaretini ve varsa yanındaki boşluğu temizle, ham soruyu al
+        # Mesajın başındaki '>' işaretini kesin olarak uçur ve sağındaki solundaki boşlukları temizle
         soru = message.content[1:].strip()
 
         if not soru:
@@ -385,15 +385,15 @@ async def on_message(message):
         # Botun o an düşündüğünü belli etmek için kanala "Yazıyor..." ibaresi verelim
         async with message.channel.typing():
             try:
-                # Buraya bizim sunucunun ruhunu yansıtan gizli bir talimat (prompt) ekleyebiliriz reis
-                # Botun kim olduğunu unutmaması için soruya ekleme yapıyoruz
-                sistem_talimati = "Sen KAJUNV36 #ZİRVE Discord sunucusunun samimi, hafif argolu ve delikanlı koruyucu botu Ezxayomisari'sin. Karşındaki adama 'reis' veya 'kral' diye hitap et, samimi ol. Soru şu: "
+                # Bota vereceğimiz gizli delikanlı talimatı
+                sistem_talimati = "Sen KAJUNV36 #ZİRVE Discord sunucusunun samimi, hafif argolu ve delikanlı koruyucu botu Ezxayomisari'sin. Karşındaki adama 'reis' veya 'kral' diye hitap et, samimi ol. Asla resmi konuşma. Soru şu: "
                 
-                # Yapay zekaya soruyu gönderiyoruz
-                response = ai_model.generate_content(sistem_talimati + soru)
+                # Yapay zekaya sadece temizlenmiş ham soruyu gönderiyoruz reis!
+                # f-string kullanarak temiz bir metin yollayalım:
+                response = ai_model.generate_content(f"{sistem_talimati} {soru}")
                 cevap = response.text
 
-                # Cevap çok uzunsa Discord sınırına (2000 karakter) takılmasın diye kırpalım
+                # Cevap çok uzunsa Discord sınırına takılmasın diye kırpalım
                 if len(cevap) > 1950:
                     cevap = cevap[:1950] + "...\n*(Devamı çok uzundu reis, kestim)*"
 
@@ -401,11 +401,12 @@ async def on_message(message):
                 await message.reply(f"{cevap}")
 
             except Exception as e:
-                print(f"Yapay zeka hatası: {e}")
+                # Render loglarında tam hatayı görebilmemiz için buraya print ekledim reis
+                print(f"YAPAY ZEKA DETAYLI HATA LOGU: {e}")
                 await message.channel.send("⚠️ Reis arkada yapay zekanın devreleri yandı valla, az sonra tekrar dene hele.")
                 return
 
-    # ÖNEMLİ: Bu satır olmazsa botun diğer komutları (!çal, !rulet vb.) çalışmayı durdurur reis!
+    # ÖNEMLİ: Bu satır olmazsa diğer komutlar (!çal, !rulet vb.) çalışmaz reis!
     await bot.process_commands(message)
 
 @bot.event
