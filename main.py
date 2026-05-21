@@ -374,62 +374,16 @@ import os
 
 @bot.event
 async def on_message(message):
+    # Bot kendi yazdığı mesajları atlasın, ekonomi komutlarını işlesin
     if message.author == bot.user:
         return
 
-    # Eğer mesaj '>' ile başlıyorsa gerçek yapay zeka tetiklensin
-    if message.content.startswith('>'):
-        soru = message.content[1:].strip()
-
-        if not soru:
-            await message.channel.send("❌ Reis '>' koydun ama arkasından bir şey yazmadın, ne diyeyim şimdi?")
-            return
-
-        async with message.channel.typing():
-            try:
-                # Google Gemini Güncel Endpoint URL'i (404 hatasını çözen doğru adres)
-                url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-                
-                # Render panelinden tokeni çek ve temizle
-                api_key = os.environ.get("GEMINI_TOKEN").strip()
-                params = {'key': api_key}
-                headers = {'Content-Type': 'application/json'}
-                
-                sistem_talimati = "Sen KAJUNV36 Discord sunucusunun samimi delikanlı botu Ezxayomisari'sin. Karşındakine reis veya kral de, samimi ve hafif argolu konuş."
-                
-                # Google'ın istediği kusursuz JSON paket yapısı reis:
-                payload = {
-                    "contents": [{
-                        "parts": [{"text": f"{sistem_talimati}\nKullanıcı şunu sordu: {soru}"}]
-                    }]
-                }
-
-                # HTTP üzerinden doğrudan yapay zekaya bağlanıyoruz
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(url, headers=headers, json=payload, params=params) as response:
-                        if response.status == 200:
-                            res_json = await response.json()
-                            cevap = res_json['candidates'][0]['content']['parts'][0]['text']
-                        else:
-                            await message.channel.send(f"⚠️ Google API bağlantı hatası reis. Kod: {response.status}")
-                            return
-
-                if len(cevap) > 1950:
-                    cevap = cevap[:1950] + "...\n*(Devamı çok uzundu reis, kestim)*"
-
-                await message.reply(f"{cevap}")
-
-            except Exception as e:
-                print(f"YAPAY ZEKA GENEL HATASI: {e}")
-                await message.channel.send("⚠️ Reis arkada yapay zekanın devreleri yandı valla, az sonra tekrar dene.")
-                return
-
-    # Kumar, rulet ve ekonomi komutlarının çalışması için bu şart!
+    # Sadece normal komutların (!çal, !rulet, !yelek_al vb.) çalışmasını sağlar
     await bot.process_commands(message)
 
 @bot.event
 async def on_ready():
-    print('KAJUNV36 FULL SİSTEM HAZIR VE NAZIR!')
+    print('KAJUNV36 EKONOMİ VE KUMAR SİSTEMİ AKTİF!')
 
 if __name__ == "__main__":
     keep_alive()
