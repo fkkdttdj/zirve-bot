@@ -3,6 +3,7 @@ import os
 import random
 import asyncio
 import json
+import google.generativeai as genai
 from discord.ext import commands
 from flask import Flask
 from threading import Thread
@@ -367,8 +368,51 @@ async def sil(ctx, sayi: int):
     await ctx.channel.purge(limit=sayi + 1)
 
 @bot.event
+async def on_message(message):
+    # Bot kendi yazdığı mesajlara cevap vermesin, sonsuz döngüye girmeyelim amk
+    if message.author == bot.user:
+        return
+
+    # Eğer mesaj '>' işareti ile başlıyorsa yapay zeka devreye girsin
+    if message.content.startswith('>'):
+        # Başındaki '>' işaretini ve varsa yanındaki boşluğu temizle, ham soruyu al
+        soru = message.content[1:].strip()
+
+        if not soru:
+            await message.channel.send("❌ Reis '>' koydun ama arkasından bir şey yazmadın, ne diyeyim şimdi sana?")
+            return
+
+        # Botun o an düşündüğünü belli etmek için kanala "Yazıyor..." ibaresi verelim
+        async with message.channel.typing():
+            try:
+                # Buraya bizim sunucunun ruhunu yansıtan gizli bir talimat (prompt) ekleyebiliriz reis
+                # Botun kim olduğunu unutmaması için soruya ekleme yapıyoruz
+                sistem_talimati = "Sen KAJUNV36 #ZİRVE Discord sunucusunun samimi, hafif argolu ve delikanlı koruyucu botu Ezxayomisari'sin. Karşındaki adama 'reis' veya 'kral' diye hitap et, samimi ol. Soru şu: "
+                
+                # Yapay zekaya soruyu gönderiyoruz
+                response = ai_model.generate_content(sistem_talimati + soru)
+                cevap = response.text
+
+                # Cevap çok uzunsa Discord sınırına (2000 karakter) takılmasın diye kırpalım
+                if len(cevap) > 1950:
+                    cevap = cevap[:1950] + "...\n*(Devamı çok uzundu reis, kestim)*"
+
+                # Kullanıcıyı etiketleyerek cevabı yapıştır
+                await message.reply(f"{cevap}")
+
+            except Exception as e:
+                print(f"Yapay zeka hatası: {e}")
+                await message.channel.send("⚠️ Reis arkada yapay zekanın devreleri yandı valla, az sonra tekrar dene hele.")
+                return
+
+    # ÖNEMLİ: Bu satır olmazsa botun diğer komutları (!çal, !rulet vb.) çalışmayı durdurur reis!
+    await bot.process_commands(message)
+
+@bot.event
 async def on_ready(): print('KAJUNV36 FULL SİSTEM HAZIR VE NAZIR!')
 
 if __name__ == "__main__":
     keep_alive()
     bot.run(os.environ.get('DISCORD_TOKEN'))
+    
+genai.configure(api_key=os.environ.get("GEMINI_TOKEN"))
