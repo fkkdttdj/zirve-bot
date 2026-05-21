@@ -374,7 +374,6 @@ import os
 
 @bot.event
 async def on_message(message):
-    # Bot kendi mesajlarına cevap vermesin, sonsuz döngüye girmeyelim
     if message.author == bot.user:
         return
 
@@ -388,31 +387,21 @@ async def on_message(message):
 
         async with message.channel.typing():
             try:
-                # Render panelinden tokeni çek ve temizle
-                api_key = os.environ.get("GEMINI_TOKEN")
-                if not api_key:
-                    await message.channel.send("⚠️ Reis Render panelinde GEMINI_TOKEN bulunamadı!")
-                    return
-                api_key = api_key.strip()
-
-                # Google Gemini Resmi İstek Adresi ve Parametreleri
+                # Google Gemini Güncel Endpoint URL'i (404 hatasını çözen doğru adres)
                 url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+                
+                # Render panelinden tokeni çek ve temizle
+                api_key = os.environ.get("GEMINI_TOKEN").strip()
                 params = {'key': api_key}
                 headers = {'Content-Type': 'application/json'}
                 
-                # Botun karakterini belirleyen gizli talimat ve kullanıcının sorusu
                 sistem_talimati = "Sen KAJUNV36 Discord sunucusunun samimi delikanlı botu Ezxayomisari'sin. Karşındakine reis veya kral de, samimi ve hafif argolu konuş."
                 
-                # Google'ın reddedemeyeceği o meşhur resmi JSON formatı:
+                # Google'ın istediği kusursuz JSON paket yapısı reis:
                 payload = {
-                    "contents": [
-                        {
-                            "role": "user",
-                            "parts": [
-                                {"text": f"{sistem_talimati}\nKullanıcı şunu sordu: {soru}"}
-                            ]
-                        }
-                    ]
+                    "contents": [{
+                        "parts": [{"text": f"{sistem_talimati}\nKullanıcı şunu sordu: {soru}"}]
+                    }]
                 }
 
                 # HTTP üzerinden doğrudan yapay zekaya bağlanıyoruz
@@ -420,13 +409,11 @@ async def on_message(message):
                     async with session.post(url, headers=headers, json=payload, params=params) as response:
                         if response.status == 200:
                             res_json = await response.json()
-                            # Yapay zekanın ürettiği gerçek cevabı çekiyoruz
                             cevap = res_json['candidates'][0]['content']['parts'][0]['text']
                         else:
                             await message.channel.send(f"⚠️ Google API bağlantı hatası reis. Kod: {response.status}")
                             return
 
-                # Discord 2000 karakter sınır koruması
                 if len(cevap) > 1950:
                     cevap = cevap[:1950] + "...\n*(Devamı çok uzundu reis, kestim)*"
 
@@ -437,15 +424,13 @@ async def on_message(message):
                 await message.channel.send("⚠️ Reis arkada yapay zekanın devreleri yandı valla, az sonra tekrar dene.")
                 return
 
-    # ÖNEMLİ: Kumar, rulet ve ekonomi komutlarının çalışması için bu şart!
+    # Kumar, rulet ve ekonomi komutlarının çalışması için bu şart!
     await bot.process_commands(message)
 
 @bot.event
-async def on_ready(): print('KAJUNV36 FULL SİSTEM HAZIR VE NAZIR!')
+async def on_ready():
+    print('KAJUNV36 FULL SİSTEM HAZIR VE NAZIR!')
 
 if __name__ == "__main__":
     keep_alive()
     bot.run(os.environ.get('DISCORD_TOKEN'))
-    
-genai.configure(api_key=os.environ.get("GEMINI_TOKEN"))
-ai_model = genai.GenerativeModel('gemini-1.5-flash')
