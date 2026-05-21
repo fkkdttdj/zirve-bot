@@ -88,8 +88,8 @@ async def on_voice_state_update(member, before, after):
 @bot.command()
 async def yardim(ctx):
     embed = discord.Embed(title="🚀 KAJUNV36 TAM SÜRÜM", description="Sunucu içindeki tüm aktif sistemler aşağıdadır.", color=discord.Color.gold())
-    embed.add_field(name="💰 Ekonomi", value="`!cuzdan`, `!günlük`, `!gönder @üye [miktar]`", inline=False)
-    embed.add_field(name="🎰 Kumar", value="`!bj [miktar]`, `!rulet [miktar]`, `!kasaac` (500 Coin)", inline=False)
+    embed.add_field(name="💰 Ekonomi", value="`!cuzdan`, `!zenginler`, `!günlük`, `!gönder @üye [miktar]`", inline=False)
+    embed.add_field(name="🎰 Kumar", value="`!bj [miktar]`, `!rulet [bahis]`, `!kasaac` (500 Coin)", inline=False)
     embed.add_field(name="🔊 Ses Takibi", value="AFK SES kanalında durarak otomatik rütbe kazanabilirsin.", inline=False)
     embed.add_field(name="🛠️ Yönetim", value="`!sil [sayı]`", inline=False)
     embed.add_field(name="💸 hırsızlık", value="`!çal`", inline=False)
@@ -194,20 +194,73 @@ async def rulet(ctx, bahis: int):
     if yazar_id not in data["bakiyeler"]: data["bakiyeler"][yazar_id] = 1000
     
     if data["bakiyeler"][yazar_id] < bahis:
-        await ctx.send("❌ Reis bu kadar coinin yok ki ortaya koyasın, blackjack'e falan ak önce.")
+        await ctx.send("❌ Reis bu kadar coinin yok ki ortaya koyasın!")
         return
 
-    # 1 ile 6 arasında rastgele sayı (6 patlar)
-    tetik = random.randint(1, 6)
+    # Şarjördeki 6 yuvayı temsil eden liste (1 tanesi dolu mermi -> True)
+    # Her oyunda merminin yeri rastgele değişir
+    sarjor = [False, False, False, False, False, False]
+    mermi_konumu = random.randint(0, 5)
+    sarjor[mermi_konumu] = True
 
-    if tetik == 3:  # 3 gelirse mermi patlar! (%16 şans)
-        data["bakiyeler"][yazar_id] -= bahis
+    tur = 1
+    guncel_bahis = bahis
+
+    await ctx.send(f"🎲 **RUS RULETİ BAŞLADI!** {ctx.author.mention} ortaya **{guncel_bahis}** coin koydu. Şarjör çevrildi, namlu şakağa dayandı... İlk el zorunlu sıkılıyor! 💥")
+    await asyncio.sleep(1.5)
+
+    # 1. EL (OTOMATİK SIKILMA)
+    if sarjor[0] == True:
+        data["bakiyeler"][yazar_id] -= guncel_bahis
         save_data(data)
-        await ctx.send(f"💥 **GÜÜÜM!** {ctx.author.mention}, namludaki mermiye denk geldin! Kafana sıktın ve **{bahis}** v36 coin kasaya uçtu... Geçmiş olsun reis 💀")
+        await ctx.send(f"💥 **GÜÜÜM!** İlk elden mermiye denk geldin reis! **{guncel_bahis}** coin kasaya uçtu... Geçmiş olsun 💀")
+        return
     else:
-        data["bakiyeler"][yazar_id] += bahis
-        save_data(data)
-        await ctx.send(f"🔫 *Tık...* {ctx.author.mention} tetik boş çıktı! Hayatta kalmayı başardın ve **{bahis * 2}** v36 coin cüzdana indi! 😎")
+        # İlk elden sağ çıkarsa ödül havuzu %50 katlanarak başlasın (Heyecan artsın)
+        guncel_bahis = int(guncel_bahis * 1.5)
+        await ctx.send(f"🔫 *Tık...* İlk el boş çıktı! Canlısın reis. Ödül şu an **{guncel_bahis}** coin. Devam etmek istiyor musun?")
+
+    # 2. EL VE SONRASI İÇİN DÖNGÜ (Maksimum 5 kere sıkabilir, çünkü 6. zaten kesin mermidir)
+    for i in range(1, 5):
+        await ctx.send(f"❓ {ctx.author.mention}, ne yapacaksın? Sohbet kanalına **sık** veya **dur** yaz!")
+
+        # Kullanıcının "sık" veya "dur" yazmasını bekleme fonksiyonu
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel and m.content.lower() in ["sık", "dur", "sik"]
+
+        try:
+            # Kullanıcıya cevap vermesi için 30 saniye süre tanıyalım, vermezse korktu sayıp durduralım
+            msg = await bot.wait_for('message', check=check, timeout=30.0)
+        except asyncio.TimeoutError:
+            await ctx.send(f"⏱️ Süren bitti reis! Çok tırstın herhalde, oyun senin adına **durdu**.")
+            break
+
+        # DURURSA PARAYI ALIR VE OYUN BİTER
+        if msg.content.lower() == "dur":
+            data["bakiyeler"][yazar_id] += (guncel_bahis - bahis) # Net karı ekle
+            save_data(data)
+            await ctx.send(f"💰 **ZİRVEDE BIRAKTIN!** {ctx.author.mention} masadan çekildi ve **{guncel_bahis}** coini cüzdanına indirdi. Korkak ama zengin! 😎")
+            return
+
+        # SIKARSA
+        elif msg.content.lower() in ["sık", "sik"]:
+            await ctx.send(f"🔄 {ctx.author.mention} tetiği tekrar çekiyor... Nefesler tutuldu...")
+            await asyncio.sleep(1.5)
+
+            if sarjor[i] == True: # Mermiye denk gelirse her şey gider
+                data["bakiyeler"][yazar_id] -= bahis # Ana bahsi kaybettir
+                save_data(data)
+                await ctx.send(f"💥 **GÜÜÜM! {i+1}. elde beyin bedava!** Mermi patladı, **{bahis}** coinin havaya uçtu reis... 💀")
+                return
+            else:
+                # Yaşarsa bahis çarpanı katlanarak artar!
+                guncel_bahis = int(guncel_bahis * 1.8)
+                await ctx.send(f"🔫 *Tık...* Yine boş! Şansına tüküreyim reis harbi bordo berelisin. Güncel ödülün: **{guncel_bahis}** coin!")
+
+    # Eğer 5 kere sıkıp hala ölmediyse (Zorunlu son el kalır, kasa parayı verir)
+    data["bakiyeler"][yazar_id] += (guncel_bahis - bahis)
+    save_data(data)
+    await ctx.send(f"🏆 **İNANILMAZ BAŞARI!** {ctx.author.mention} ölümün kıyısından 5 kere geçti ve ölmedi! Toplam **{guncel_bahis}** coini söke söke aldı! Sunucu ağası ilan ediyoruz!")
 
 @bot.command()
 async def günlük(ctx):
