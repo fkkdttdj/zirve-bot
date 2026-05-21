@@ -89,17 +89,38 @@ async def on_voice_state_update(member, before, after):
 async def yardim(ctx):
     embed = discord.Embed(title="🚀 KAJUNV36 TAM SÜRÜM", description="Sunucu içindeki tüm aktif sistemler aşağıdadır.", color=discord.Color.gold())
     embed.add_field(name="💰 Ekonomi", value="`!cuzdan`, `!günlük`, `!gönder @üye [miktar]`", inline=False)
-    embed.add_field(name="🎰 Kumar", value="`!bj [miktar]`, `!kasaac` (500 Coin)", inline=False)
+    embed.add_field(name="🎰 Kumar", value="`!bj [miktar]`, `!rulet [miktar]`, `!kasaac` (500 Coin)", inline=False)
     embed.add_field(name="🔊 Ses Takibi", value="AFK SES kanalında durarak otomatik rütbe kazanabilirsin.", inline=False)
     embed.add_field(name="🛠️ Yönetim", value="`!sil [sayı]`", inline=False)
-    embed.add_field(name="💰 hırsızlık", value="`!çal`", inline=False)
-    embed.set_footer(text="KAJUNV36 #ZİRVE")
+    embed.add_field(name="💸 hırsızlık", value="`!çal`", inline=False)
+    embed.add_field(name="🛡 güvenlik", value="`!yelekal`", inline=False)
+    embed.set_footer(text="KAJUNV36 #PRIME")
     await ctx.send(embed=embed)
 
 @bot.command()
 async def cuzdan(ctx):
     bakiye = load_data()["bakiyeler"].get(str(ctx.author.id), 1000)
     await ctx.send(f"💰 Bakiyen: **{bakiye} Kajun Coin**")
+
+@bot.command()
+async def yelekal(ctx):
+    data = load_data()
+    yazar_id = str(ctx.author.id)
+
+    if yazar_id not in data["bakiyeler"]: data["bakiyeler"][yazar_id] = 1000
+    # Eğer yelekler tablosu json'da yoksa ilk defa oluşturur
+    if "yelekler" not in data: data["yelekler"] = {}
+    if yazar_id not in data["yelekler"]: data["yelekler"][yazar_id] = 0
+
+    if data["bakiyeler"][yazar_id] < 2500:
+        await ctx.send("❌ Reis cüzdan boş! Çelik yelek 2500 v36 coin, önce biraz çalış veya kumar oyna.")
+        return
+
+    data["bakiyeler"][yazar_id] -= 2500
+    data["yelekler"][yazar_id] += 1
+    save_data(data)
+
+    await ctx.send(f"🛡️ **İŞLEM BAŞARILI!** {ctx.author.mention}, 2500 coine çelik yeleği sırtına geçirdin! Artık seni soymaya çalışanlar düşünsün. (Kalan Yelek: {data['yelekler'][yazar_id]})")
 
 @bot.command()
 async def çal(ctx, hedef: discord.Member):
@@ -149,10 +170,77 @@ async def çal(ctx, hedef: discord.Member):
 
         await ctx.send(f"🚨 **YAKALANDIN!** {ctx.author.mention}, {hedef.mention} şahsının cüzdanına el uzatırken suçüstü yakalandı! Karakola **{ceza}** v36 coin ceza ödedi. 👮‍♂️")
 
+    # === ÇAL KOMUTUNUN İÇİNE EKLENECEK YELEK KORUMASI ===
+    if "yelekler" not in data: data["yelekler"] = {}
+    if hedef_id not in data["yelekler"]: data["yelekler"][hedef_id] = 0
+
+    if data["yelekler"][hedef_id] > 0:
+        # Hedefin yeleği var! Soygunu otomatik engelle ve yeleği kır
+        data["yelekler"][hedef_id] -= 1
+        save_data(data)
+        await ctx.send(f"🛡️ **YELEK DEVREDE!** {ctx.author.mention}, {hedef.mention} şahsını soymaya çalıştın ama adam çelik yelek giymiş! Soygun başarısız oldu ve {hedef.mention}'ın yeleği parçalandı! 🧱")
+        return
+    # ===================================================
+
+@bot.command()
+async def rulet(ctx, bahis: int):
+    if bahis <= 0:
+        await ctx.send("⚠️ Reis düzgün bir bahis miktarı gir gözünü seveyim!")
+        return
+
+    data = load_data()
+    yazar_id = str(ctx.author.id)
+
+    if yazar_id not in data["bakiyeler"]: data["bakiyeler"][yazar_id] = 1000
+    
+    if data["bakiyeler"][yazar_id] < bahis:
+        await ctx.send("❌ Reis bu kadar coinin yok ki ortaya koyasın, blackjack'e falan ak önce.")
+        return
+
+    # 1 ile 6 arasında rastgele sayı (6 patlar)
+    tetik = random.randint(1, 6)
+
+    if tetik == 3:  # 3 gelirse mermi patlar! (%16 şans)
+        data["bakiyeler"][yazar_id] -= bahis
+        save_data(data)
+        await ctx.send(f"💥 **GÜÜÜM!** {ctx.author.mention}, namludaki mermiye denk geldin! Kafana sıktın ve **{bahis}** v36 coin kasaya uçtu... Geçmiş olsun reis 💀")
+    else:
+        data["bakiyeler"][yazar_id] += bahis
+        save_data(data)
+        await ctx.send(f"🔫 *Tık...* {ctx.author.mention} tetik boş çıktı! Hayatta kalmayı başardın ve **{bahis * 2}** v36 coin cüzdana indi! 😎")
+
 @bot.command()
 async def günlük(ctx):
     update_balance(ctx.author.id, 500)
     await ctx.send("💵 Günlük 500 coin alındı reis!")
+
+@bot.command()
+async def zenginler(ctx):
+    data = load_data()
+    bakiyeler = data["bakiyeler"]
+
+    # Bakiyeleri paraya göre büyükten küçüğe sırala
+    sirali_liste = sorted(bakiyeler.items(), key=lambda x: x[1], reverse=True)
+
+    mesaj = "🏆 **KAJUNV36 #ZİRVE - ZENGİNLER LİSTESİ** 🏆\n"
+    mesaj += "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+
+    # İlk 5 zengini listele (Sunucuda real 5 kişi olduğu için tam uyar)
+    for sira, (kullanici_id, para) in enumerate(sirali_liste[:5], 1):
+        try:
+            # Kullanıcı adını Discord'dan çekmeye çalışır
+            uye = await ctx.guild.fetch_member(int(kullanici_id))
+            isim = uye.display_name
+        except:
+            isim = f"Bilinmeyen Şahıs ({kullanici_id})"
+        
+        madalya = "🥇" if sira == 1 else "🥈" if sira == 2 else "🥉" if sira == 3 else "💸"
+        mesaj += f"{madalya} **{sira}.** {isim} ➔ **{para}** v36 coin\n"
+
+    mesaj += "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    mesaj += "*Zirvedekiler yerini korusun, arkadakiler cüzdan dikizlesin!*"
+    
+    await ctx.send(mesaj)
 
 @bot.command()
 async def gönder(ctx, member: discord.Member, miktar: int):
